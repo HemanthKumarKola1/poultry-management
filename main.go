@@ -17,6 +17,28 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+func main() {
+	dbURL := "postgresql://root:secret@localhost:5432/farm?sslmode=disable"
+
+	if err := migrateDatabase(dbURL, "up"); err != nil {
+		log.Fatalf("Migration failed: %v", err)
+	}
+	fmt.Println("Migrations completed successfully.")
+
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+	defer pool.Close()
+
+	r := repo.NewRepository(pool)
+
+	router := api.NewAuthHandler(api.Config{JWTSecret: "supposed-to-be-from-env"}, r, gin.Default())
+	router.Router.Run(":8080")
+}
+
+// For future Refactoring, consider moving the database connection logic to a separate package or module.
 func migrateDatabase(dbURL, direction string) error {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -24,13 +46,9 @@ func migrateDatabase(dbURL, direction string) error {
 	}
 
 	migrationsPath := filepath.Join(wd, "internal", "db", "migrations")
-
-	m, err := migrate.New(
-		"file://"+migrationsPath,
-		dbURL,
-	)
+	m, err := migrate.New("file://"+migrationsPath, dbURL)
 	if err != nil {
-		log.Fatal("creating migrate instance: %w", err)
+		return fmt.Errorf("creating migrate instance: %w", err)
 	}
 
 	switch direction {
@@ -39,7 +57,7 @@ func migrateDatabase(dbURL, direction string) error {
 			return fmt.Errorf("migrating up: %w", err)
 		}
 	case "down":
-		if err := m.Down(); err != nil {
+		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
 			return fmt.Errorf("migrating down: %w", err)
 		}
 	case "force":
@@ -47,7 +65,6 @@ func migrateDatabase(dbURL, direction string) error {
 		if err != nil {
 			return fmt.Errorf("getting current version: %w", err)
 		}
-
 		if err := m.Force(int(version)); err != nil {
 			return fmt.Errorf("forcing version: %w", err)
 		}
@@ -56,28 +73,4 @@ func migrateDatabase(dbURL, direction string) error {
 	}
 
 	return nil
-}
-
-func main() {
-
-	dbURL := "postgresql://root:secret@localhost:5432/farm?sslmode=disable"
-
-	if err := migrateDatabase(dbURL, "up"); err != nil {
-		log.Fatal("Migration failed:", err)
-	}
-
-	fmt.Println("Migrations completed successfully.")
-
-	ctx := context.Background()
-
-	pool, err := pgxpool.New(ctx, dbURL)
-	if err != nil {
-		log.Fatal("Unable to connect to database:", err)
-	}
-	defer pool.Close()
-
-	r := repo.NewRepository(pool)
-
-	api.NewAuth(api.Config{JWTSecret: "sholdbe-read-from-env"}, r, gin.Default())
-
 }
