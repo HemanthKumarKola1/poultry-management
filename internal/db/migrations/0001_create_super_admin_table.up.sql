@@ -13,7 +13,3 @@ CREATE TABLE public.super_admin (
 --     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 --     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 -- );
-
---  initial setup
-INSERT INTO public.super_admin (username, password_hash)
-VALUES ('admin', '$2a$12$hashed_initial_password');

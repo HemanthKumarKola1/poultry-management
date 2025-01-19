@@ -12,20 +12,20 @@ import (
 )
 
 type AuthHandler struct {
-	Config     Config
-	Repository *repo.Repository
-	Router     *gin.Engine
+	config Config
+	user   repo.UserRepo
+	Router *gin.Engine
 }
 
 type Config struct {
 	JWTSecret string
 }
 
-func NewAuthHandler(config Config, repo *repo.Repository, e *gin.Engine) *AuthHandler {
+func NewAuthHandler(config Config, repo repo.UserRepo, e *gin.Engine) *AuthHandler {
 	a := &AuthHandler{
-		Config:     config,
-		Repository: repo,
-		Router:     e,
+		config: config,
+		user:   repo,
+		Router: e,
 	}
 
 	setupRoutes(a)
@@ -36,9 +36,9 @@ func setupRoutes(a *AuthHandler) {
 	a.Router.POST("/login", a.loginHandler)
 
 	protected := a.Router.Group("/verified")
-	protected.Use(authMiddleware([]byte(a.Config.JWTSecret))) // Middelware for authentication
+	protected.Use(authMiddleware([]byte(a.config.JWTSecret))) // Middelware for authentication
 
-	protected.POST("/signup", a.signupHandler)
+	protected.POST("/signup", a.signupHandler) // only an existing user will be allowed to sign up other users
 	protected.GET("/ping", a.pingHandler)
 }
 
@@ -49,7 +49,7 @@ func (a *AuthHandler) signupHandler(c *gin.Context) {
 		return
 	}
 
-	id, err := a.Repository.CreateUser(c.Request.Context(), req)
+	id, err := a.user.CreateUser(c, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -65,18 +65,13 @@ func (a *AuthHandler) loginHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := a.Repository.GetUserByUsername(c.Request.Context(), req.Username)
+	user, err := a.user.GetUser(c, req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	if err := auth.CheckPasswordHash(req.Password, user.PasswordHash); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
-	}
-
-	token, err := auth.GenerateJWT(user.ID, *user.TenantID, user.Username, []byte(a.Config.JWTSecret))
+	token, err := auth.GenerateJWT(user, []byte(a.config.JWTSecret))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -111,6 +106,7 @@ func authMiddleware(jwtKey []byte) gin.HandlerFunc {
 		c.Set("user_id", claims.UserID)
 		c.Set("tenant_id", claims.TenantID)
 		c.Set("username", claims.Username)
+		c.Set("role", claims.Role)
 		c.Next()
 	}
 }

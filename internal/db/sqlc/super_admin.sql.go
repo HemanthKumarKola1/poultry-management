@@ -77,24 +77,18 @@ func (q *Queries) GetSuperAdmin(ctx context.Context, id int32) (GetSuperAdminRow
 }
 
 const getSuperAdminByUsername = `-- name: GetSuperAdminByUsername :one
-SELECT id, username, created_at, updated_at
+SELECT id, username, password_hash, created_at, updated_at
 FROM super_admin
 WHERE username = $1
 `
 
-type GetSuperAdminByUsernameRow struct {
-	ID        int32              `json:"id"`
-	Username  string             `json:"username"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetSuperAdminByUsername(ctx context.Context, username string) (GetSuperAdminByUsernameRow, error) {
+func (q *Queries) GetSuperAdminByUsername(ctx context.Context, username string) (SuperAdmin, error) {
 	row := q.db.QueryRow(ctx, getSuperAdminByUsername, username)
-	var i GetSuperAdminByUsernameRow
+	var i SuperAdmin
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.PasswordHash,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

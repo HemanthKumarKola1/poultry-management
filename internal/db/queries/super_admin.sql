@@ -9,7 +9,7 @@ FROM super_admin
 WHERE id = $1;
 
 -- name: GetSuperAdminByUsername :one
-SELECT id, username, created_at, updated_at
+SELECT id, username, password_hash, created_at, updated_at
 FROM super_admin
 WHERE username = $1;
 

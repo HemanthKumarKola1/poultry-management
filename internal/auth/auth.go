@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"poultry-management.com/pkg/domain"
 )
 
 // Claims represents the JWT claims
@@ -13,7 +14,7 @@ type Claims struct {
 	UserID     int32  `json:"user_id"`
 	TenantID   int32  `json:"tenant_id"`
 	Username   string `json:"username"`
-	SuperAdmin bool   `json:"super_admin"`
+	Role       string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -31,12 +32,13 @@ type LoginRequest struct {
 	SuperAdmin bool   `json:"super_admin" binding:"required"`
 }
 
-func GenerateJWT(userID int32, tenantID int32, username string, jwtKey []byte) (string, error) {
+func GenerateJWT(user domain.User, jwtKey []byte) (string, error) {
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &Claims{
-		UserID:   userID,
-		TenantID: tenantID,
-		Username: username,
+		UserID:   user.ID,
+		TenantID: user.TenantID,
+		Username: user.Username,
+		Role:     user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
