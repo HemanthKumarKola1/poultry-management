@@ -1,16 +1,62 @@
 package repo
 
 import (
-	"github.com/gin-gonic/gin"
-	"poultry-management.com/internal/auth"
-	"poultry-management.com/pkg/domain"
+	"context"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	db "poultry-management.com/internal/db/sqlc"
 )
 
 type LocationRepo interface {
-	CreateLocation(c *gin.Context, req auth.SignupRequest) (int32, error)
-	GetLocation(c *gin.Context, req auth.LoginRequest) (domain.User, error)
+	CreateNewTenantLocation(ctx context.Context, req db.CreateLocationParams, tenantID int32) (db.Location, error)
+	GetLocation(ctx context.Context, locID int32, tenantID int32) (db.Location, error)
 }
 
-func (r *Repository) CreateLocation(c *gin.Context, req auth.SignupRequest) (int32, error)
+func (r *Repository) CreateNewTenantLocation(ctx context.Context, req db.CreateLocationParams, tenantID int32) (db.Location, error) {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return db.Location{}, err
+	}
+	defer tx.Rollback(ctx)
 
-func (r *Repository) GetLocation(c *gin.Context, req auth.LoginRequest) (domain.User, error)
+	_, err = tx.Exec(ctx, fmt.Sprintf("SET search_path TO tenant_%dI", tenantID))
+	if err != nil {
+		return db.Location{}, err
+	}
+
+	loc, err := r.CreateLocation(ctx, req)
+	if err != nil {
+		return db.Location{}, err
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return db.Location{}, err
+	}
+
+	return loc, nil
+}
+
+func (r *Repository) GetLocation(ctx context.Context, locID int32, tenantID int32) (db.Location, error) {
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return db.Location{}, err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, fmt.Sprintf("SET search_path TO tenant_%dI", tenantID))
+	if err != nil {
+		return db.Location{}, err
+	}
+
+	loc, err := r.GetLocationByID(ctx, locID)
+	if err != nil {
+		return db.Location{}, err
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return db.Location{}, err
+	}
+
+	return loc, nil
+}
