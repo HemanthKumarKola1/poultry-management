@@ -22,7 +22,7 @@ type UserRepo interface {
 	GetUser(c *gin.Context, req auth.LoginRequest) (domain.User, error)
 }
 
-func NewRepository(dbConn *pgxpool.Pool) UserRepo {
+func NewRepository(dbConn *pgxpool.Pool) *Repository {
 	repo := &Repository{
 		Queries: db.New(dbConn),
 		db:      dbConn,

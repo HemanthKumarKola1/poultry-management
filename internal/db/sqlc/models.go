@@ -8,28 +8,65 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Chicken struct {
+	ID        int32              `json:"id"`
+	Breed     *string            `json:"breed"`
+	HatchDate pgtype.Date        `json:"hatch_date"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type FeedSchedule struct {
+	ID               int32              `json:"id"`
+	FeedTypeID       *int32             `json:"feed_type_id"`
+	TimesPerDay      *int32             `json:"times_per_day"`
+	AmountPerFeeding pgtype.Numeric     `json:"amount_per_feeding"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+type FeedType struct {
+	ID          int32              `json:"id"`
+	Name        string             `json:"name"`
+	CostPerUnit pgtype.Numeric     `json:"cost_per_unit"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type FeedingLog struct {
+	ID         int32              `json:"id"`
+	FeedTypeID *int32             `json:"feed_type_id"`
+	ChickenIds []int32            `json:"chicken_ids"`
+	AmountFed  pgtype.Numeric     `json:"amount_fed"`
+	DateTime   pgtype.Timestamptz `json:"date_time"`
+	Comments   *string            `json:"comments"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Inventory struct {
 	ID           int32              `json:"id"`
-	TenantID     int32              `json:"tenant_id"`
-	LocationID   int32              `json:"location_id"`
+	LocationID   *int32             `json:"location_id"`
 	ChickenCount *int32             `json:"chicken_count"`
-	Feed         *int32             `json:"feed"`
 	LoadDate     pgtype.Date        `json:"load_date"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Location struct {
-	ID            int32              `json:"id"`
-	TenantID      int32              `json:"tenant_id"`
-	Location      string             `json:"location"`
-	ZipCode       *string            `json:"zip_code"`
-	Latitude      pgtype.Numeric     `json:"latitude"`
-	Longitude     pgtype.Numeric     `json:"longitude"`
-	ContactPerson *string            `json:"contact_person"`
-	Phone         *string            `json:"phone"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ID          int32              `json:"id"`
+	Name        string             `json:"name"`
+	Description *string            `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Log struct {
+	ID        int32              `json:"id"`
+	UserID    *int32             `json:"user_id"`
+	Action    *string            `json:"action"`
+	Details   []byte             `json:"details"`
+	Timestamp pgtype.Timestamptz `json:"timestamp"`
 }
 
 type Role struct {

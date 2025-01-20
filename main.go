@@ -34,8 +34,15 @@ func main() {
 
 	r := repo.NewRepository(pool)
 
-	router := api.NewAuthHandler(api.Config{JWTSecret: "supposed-to-be-from-env"}, r, gin.Default())
-	router.Router.Run(":8080")
+	ginRouter := gin.Default()
+
+	router := api.NewAuthHandler(api.Config{JWTSecret: "supposed-to-be-from-env"}, r, ginRouter)
+	api.NewLocationHandler(r, ginRouter)
+
+	err = router.Router.Run(":8080")
+	if err != nil {
+		log.Fatalf("unable to start server: %v", err)
+	}
 }
 
 // For future Refactoring, consider moving the database connection logic to a separate package or module.
