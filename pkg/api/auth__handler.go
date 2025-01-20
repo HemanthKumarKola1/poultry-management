@@ -88,25 +88,3 @@ func (a *AuthHandler) pingHandler(c *gin.Context) {
 		"message": fmt.Sprintf("pong user id: %d, tenant id: %d, username: %s", userID, tenantID, username),
 	})
 }
-
-func authMiddleware(jwtKey []byte) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tokenString := c.GetHeader("AuthHandlerorization")
-		if tokenString == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "AuthHandlerorization header is missing"})
-			return
-		}
-
-		claims, err := auth.ValidateJWT(tokenString, jwtKey)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			return
-		}
-
-		c.Set("user_id", claims.UserID)
-		c.Set("tenant_id", claims.TenantID)
-		c.Set("username", claims.Username)
-		c.Set("role", claims.Role)
-		c.Next()
-	}
-}

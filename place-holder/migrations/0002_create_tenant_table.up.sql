@@ -1,4 +1,4 @@
-CREATE TABLE public.tenants (
+CREATE TABLE public.tenant (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     license_key TEXT UNIQUE NOT NULL,
