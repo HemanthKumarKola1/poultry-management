@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"poultry-management.com/archive/tenants"
+	"poultry-management.com/place-holder/archive/tenants"
 )
 
 func CreateTenantHandler(s *tenants.Service) http.HandlerFunc {

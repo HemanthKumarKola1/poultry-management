@@ -1,0 +1,60 @@
+CREATE TABLE locations (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE inventory (
+    id SERIAL PRIMARY KEY,
+    location_id INTEGER REFERENCES locations(id),
+    chicken_count INTEGER,
+    load_date DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE feed_types (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    cost_per_unit DECIMAL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE feed_schedules (
+    id SERIAL PRIMARY KEY,
+    feed_type_id INTEGER REFERENCES feed_types(id),
+    times_per_day INTEGER,
+    amount_per_feeding DECIMAL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE feeding_logs (
+    id SERIAL PRIMARY KEY,
+    feed_type_id INTEGER REFERENCES feed_types(id),
+    chicken_ids INTEGER[], 
+    amount_fed DECIMAL,
+    date_time TIMESTAMP WITH TIME ZONE,
+    comments TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE chickens (
+    id SERIAL PRIMARY KEY,
+    breed TEXT,
+    hatch_date DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id), 
+    action TEXT,
+    details JSONB,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
