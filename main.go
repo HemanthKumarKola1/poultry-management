@@ -38,6 +38,7 @@ func main() {
 
 	router := api.NewAuthHandler(api.Config{JWTSecret: "supposed-to-be-from-env"}, r, ginRouter)
 	api.NewLocationHandler(r, ginRouter)
+	api.NewTenantHandler(r, router.Router)
 
 	err = router.Router.Run(":8080")
 	if err != nil {
