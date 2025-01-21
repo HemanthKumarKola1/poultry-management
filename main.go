@@ -52,7 +52,7 @@ func migrateDatabase(dbURL, direction string) error {
 		return fmt.Errorf("getting working directory: %w", err)
 	}
 
-	migrationsPath := filepath.Join(wd, "internal", "db", "migrations")
+	migrationsPath := filepath.ToSlash(filepath.Join(wd, "internal", "db", "migrations"))
 	m, err := migrate.New("file://"+migrationsPath, dbURL)
 	if err != nil {
 		return fmt.Errorf("creating migrate instance: %w", err)

@@ -33,24 +33,29 @@ func NewRepository(dbConn *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) CreateUser(c *gin.Context, req auth.SignupRequest) (int32, error) {
-
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
 		return 0, fmt.Errorf("hashing password: %w", err)
 	}
+
 	var id int32
-	if req.SuperAdmin && c.GetString("role") == "super_admin" {
-		id, err = r.createSuperAdmin(c, req.Password, hashedPassword)
-	} else if c.GetString("role") == "admin" || c.GetString("role") == "master" || c.GetString("role") == "super_admin" {
+	role := c.GetString("role")
+
+	switch {
+	case req.SuperAdmin && role == "super_admin" && req.Role == "super_admin":
+		id, err = r.createSuperAdmin(c, req.Username, hashedPassword)
+	case role == "admin" || role == "master" || role == "super_admin":
 		if req.TenantID == 0 {
 			return 0, fmt.Errorf("please provide a valid tenant id")
 		}
-		var tid int32 = int32(req.TenantID)
+		tid := int32(req.TenantID)
 		id, err = r.createOtherUser(c, req.Username, hashedPassword, req.Role, &tid)
+	default:
+		return 0, fmt.Errorf("unauthorized role: %s", role)
 	}
 
 	if err != nil {
-		return 0, fmt.Errorf("error creating %w", err)
+		return 0, fmt.Errorf("error creating user: %w", err)
 	}
 
 	return id, nil
